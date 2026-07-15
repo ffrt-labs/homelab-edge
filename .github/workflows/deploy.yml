@@ -1,0 +1,39 @@
+name: Deploy edge proxy
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  deploy:
+    name: Deployment
+    runs-on: self-hosted
+    steps:
+      - name: Setup PATH
+        run: echo "/usr/bin" >> $GITHUB_PATH
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write .env from secrets and vars
+        run: |
+          cat > .env <<'EOF'
+          EDGE_BASE_DOMAIN=${{ vars.EDGE_BASE_DOMAIN }}
+          CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+          EOF
+
+      - name: Ensure edge network exists
+        # Apps (mycoach and future ones) declare this network as external,
+        # so it must exist before any of them can start. Idempotent — safe
+        # to run on every deploy, and this is also documented as a one-time
+        # manual step in the README for a cold server rebuild.
+        run: docker network create edge 2>/dev/null || true
+
+      - name: Build image
+        run: docker compose build
+
+      - name: Start services
+        run: docker compose up -d --force-recreate --remove-orphans
+
+      - name: Prune old images
+        run: docker image prune -f

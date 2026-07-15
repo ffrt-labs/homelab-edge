@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:1
+# Caddy ships no DNS plugins by default. We need DNS-01 (Cloudflare) so the
+# server can get a real, browser-trusted cert without opening any inbound
+# port to the internet — HTTPS only has to be valid on the LAN.
+FROM caddy:2-builder AS builder
+
+RUN xcaddy build --with github.com/caddy-dns/cloudflare
+
+FROM caddy:2
+
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy

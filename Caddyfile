@@ -1,0 +1,35 @@
+# Single entry point for every app on this server. One wildcard cert covers
+# every subdomain, so adding an app never needs a new DNS record or a new
+# cert — just a matcher + handle block below.
+#
+# Why wildcard instead of one cert per app: cert issuance is published to
+# public Certificate Transparency logs. Per-app certs would leak the name
+# of every service this server runs (crt.sh). A wildcard only ever
+# publishes "*.{$EDGE_BASE_DOMAIN} exists" — nothing about what's behind it.
+#
+# {$VAR} substitutes at Caddy startup from the container's environment
+# (populated by docker-compose's `env_file: .env`). See .env.example for
+# EDGE_BASE_DOMAIN and CLOUDFLARE_API_TOKEN.
+#
+# To add an app:
+#   1. Join it to the external `edge` Docker network (no host ports).
+#   2. Add an @name host matcher + handle block below, pointed at its
+#      service name and port.
+#   No DNS change, no new cert — the wildcard already covers it.
+
+*.{$EDGE_BASE_DOMAIN} {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+
+	@mycoach host mycoach.{$EDGE_BASE_DOMAIN}
+	handle @mycoach {
+		reverse_proxy mycoach:8000
+	}
+
+	# Any subdomain without an explicit route above: drop the connection
+	# rather than silently routing it to whichever app happens to be first.
+	handle {
+		abort
+	}
+}

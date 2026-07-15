@@ -1,0 +1,34 @@
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    container_name: caddy
+    restart: unless-stopped
+    env_file: .env
+    # Only 443 — NOT 80. Cert issuance uses DNS-01 (a Cloudflare DNS TXT
+    # record), so Caddy never needs an inbound port-80 listener. Port 80 on
+    # this box is already owned by Pi-hole.
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Must persist: holds the issued cert. Let's Encrypt allows only 5
+      # duplicate certs per domain per week — losing this volume repeatedly
+      # can exhaust that limit.
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - edge
+
+networks:
+  # Created once via `docker network create edge` (also done idempotently
+  # by this repo's deploy workflow). Apps join this network as external and
+  # publish no LAN ports of their own — Caddy is the only way in, reaching
+  # each app by its Compose service name over Docker's internal DNS.
+  edge:
+    external: true
+
+volumes:
+  caddy-data:
+  caddy-config:
