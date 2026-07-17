@@ -27,6 +27,11 @@
 		reverse_proxy mycoach:8000
 	}
 
+	@agregado host agregado-app.{$EDGE_BASE_DOMAIN}
+	handle @agregado {
+		reverse_proxy agregado:8080
+	}
+
 	# Any subdomain without an explicit route above: drop the connection
 	# rather than silently routing it to whichever app happens to be first.
 	handle {
