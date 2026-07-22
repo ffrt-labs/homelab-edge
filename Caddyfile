@@ -32,6 +32,17 @@
 		reverse_proxy agregado:8080
 	}
 
+	# Grafana is the query UI for the observability stack (repo:
+	# homelab-observability). Only Grafana joins this shared `edge` network —
+	# Loki, Prometheus and Alloy stay on that repo's own private network,
+	# because an unauthenticated Loki reachable from every app container
+	# would expose every log line on the server, including any secrets an
+	# app has printed to stdout.
+	@grafana host grafana.{$EDGE_BASE_DOMAIN}
+	handle @grafana {
+		reverse_proxy grafana:3000
+	}
+
 	# Any subdomain without an explicit route above: drop the connection
 	# rather than silently routing it to whichever app happens to be first.
 	handle {
