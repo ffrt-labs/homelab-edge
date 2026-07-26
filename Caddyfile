@@ -32,6 +32,11 @@
 		reverse_proxy agregado:8080
 	}
 
+    @hermes host hermes.{$EDGE_BASE_DOMAIN}
+    handle @hermes {
+        reverse_proxy hermes:9119
+    }
+
 	# Grafana is the query UI for the observability stack (repo:
 	# homelab-observability). Only Grafana joins this shared `edge` network —
 	# Loki, Prometheus and Alloy stay on that repo's own private network,

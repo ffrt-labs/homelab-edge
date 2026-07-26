@@ -23,10 +23,6 @@ jobs:
           EOF
 
       - name: Ensure edge network exists
-        # Apps (mycoach and future ones) declare this network as external,
-        # so it must exist before any of them can start. Idempotent — safe
-        # to run on every deploy, and this is also documented as a one-time
-        # manual step in the README for a cold server rebuild.
         run: docker network create edge 2>/dev/null || true
 
       - name: Build image

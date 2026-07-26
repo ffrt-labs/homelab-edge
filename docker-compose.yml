@@ -20,6 +20,8 @@ services:
       - caddy-config:/config
     networks:
       - edge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   # Created once via `docker network create edge` (also done idempotently
